@@ -11,7 +11,7 @@ install the dependencies (see import statements) and will need to put the conten
 in the sys.path variable.
 
 ## Known Issues
-* Occasionally, especially when reading large files, the Maccor DLL will throw an exception. This is not handled yet.
-  Since the DLL is proprietary, we cannot fix this issue. The workaround is to re-run the script. Some files are not 
+* (Fixed) Occasionally, especially when reading large files, the Maccor DLL will throw an exception. This is not 
+  handled yet. Since the DLL is proprietary, we cannot fix this issue. The workaround is to re-run the script. Some files are not 
   readable at all. We have not yet determined the cause of this issue. Any hints on how to fix this are welcome. 
   Feel free to open an issue or pull request.
