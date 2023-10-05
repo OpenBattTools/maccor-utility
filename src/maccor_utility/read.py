@@ -150,7 +150,9 @@ class TDLLFRARecord(ctypes.Structure):
 
 
 class MacDataFile:
-    def __init__(self, rawfile):
+    def __init__(self, rawfile: pathlib.Path):
+        if not Path(rawfile).exists():
+            raise FileNotFoundError(f"File {rawfile} does not exist!")
         self.file_name = str(rawfile)
         self.data_dict = {}
         print(f"target file: {self.file_name}")
@@ -940,6 +942,8 @@ def read_maccor_data(
             "function": read_mims_client2,
         },
     }
+    if not Path(file).exists():
+        raise FileNotFoundError(f"File {file} does not exist!")
     # 'MIMS Client 1 and MIMS Export 1 should be identical
     switcher["View Data 1"] = switcher["MIMS Client 1"]
     switcher["View Data 2"] = switcher["MIMS Client 2"]
