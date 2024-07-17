@@ -17,8 +17,10 @@ import copy
 import ctypes
 import datetime
 import gc
-import pathlib
+import os
+from enum import Enum
 from pathlib import Path
+from typing import Dict, List, Optional, Union
 
 import pandas as pd
 
@@ -150,23 +152,24 @@ class TDLLFRARecord(ctypes.Structure):
 
 
 class MacDataFile:
-    def __init__(self, rawfile: pathlib.Path):
+    def __init__(self, rawfile: Path, dll_path=None):
         if not Path(rawfile).exists():
             raise FileNotFoundError(f"File {rawfile} does not exist!")
         self.file_name = str(rawfile)
         self.data_dict = {}
+        if dll_path is None:
+            current_file_path = os.path.abspath(__file__)
+            current_file_path_dir = os.path.dirname(current_file_path)
+            self.dll_path = os.path.join(
+                current_file_path_dir, "maccor_dll", "MacReadDataFileLIB64bit.dll"
+            )
+            self.dll = ctypes.windll.LoadLibrary(self.dll_path)
         print(f"target file: {self.file_name}")
 
     def read(self, debug: bool = False) -> dict:
         # Patch print function
         def print(msg):
             print_(msg=msg, ts=False, dg=debug)
-
-        # stdcall
-        dll_path = str(
-            Path(__file__).parents[1] / "maccor_dll" / "MacReadDataFileLIB64bit.dll"
-        )
-        dll = ctypes.windll.LoadLibrary(dll_path)
 
         rd = {  # return dictionary
             "Meta data": {
@@ -272,13 +275,13 @@ class MacDataFile:
             # pfile_name_ascii = ctypes.c_char_p(self.file_name.encode("utf-8"))
             # OpenDataFileASCII
             s_array = (ctypes.c_wchar * 256)()
-            file_handle = dll.OpenDataFile(self.file_name)
+            file_handle = self.dll.OpenDataFile(self.file_name)
 
             if file_handle >= 0:
                 print(f"file access successful! handle = {file_handle}\n")
                 # Use the handle to get the header data (Not required)
                 hdr_obj = TDLLHeaderData()  # hdr_obj
-                dll.GetDataFileHeader(file_handle, ctypes.pointer(hdr_obj))
+                self.dll.GetDataFileHeader(file_handle, ctypes.pointer(hdr_obj))
                 # rd["Meta data"]["Header data"] = hdr_obj
                 hdr_dict = dict()
                 for field in hdr_obj.field_strings_:
@@ -308,35 +311,35 @@ class MacDataFile:
                     "File type": file_type,
                 }
                 # Use the handle to get the System ID  (Not required)
-                dll.GetSystemID(
+                self.dll.GetSystemID(
                     file_handle, ctypes.pointer(s_array), hdr_obj.SystemIDLen
                 )
                 print(f"System ID is: {s_array.value}")
                 sac = copy.deepcopy(s_array)
                 rd["Meta data"]["Parameters"]["System ID"] = sac.value
                 # Use the handle to get the name of the test procedure (Not required)
-                dll.GetProcName(
+                self.dll.GetProcName(
                     file_handle, ctypes.pointer(s_array), hdr_obj.ProcNameLen
                 )
                 print(f"Test procedure is: {s_array.value}")
                 sac1 = copy.deepcopy(s_array)
                 rd["Meta data"]["Parameters"]["Procedure name"] = sac1.value
                 # Use the handle to get the name of the test
-                dll.GetTestName(
+                self.dll.GetTestName(
                     file_handle, ctypes.pointer(s_array), hdr_obj.TestNameLen
                 )
                 print(f"Test name is: {s_array.value}")
                 sac2 = copy.deepcopy(s_array)
                 rd["Meta data"]["Parameters"]["Test name"] = sac2.value
                 # Use the handle to get the test info (Not required)
-                dll.GetTestInfo(
+                self.dll.GetTestInfo(
                     file_handle, ctypes.pointer(s_array), hdr_obj.TestInfoLen
                 )
                 print(f"Test info is: {s_array.value}")
                 sac3 = copy.deepcopy(s_array)
                 rd["Meta data"]["Parameters"]["Test info"] = sac3.value
                 # Use the handle to get the procedure description (Not required)
-                dll.GetProcDesc(
+                self.dll.GetProcDesc(
                     file_handle, ctypes.pointer(s_array), hdr_obj.ProcDescLen
                 )
                 print(f"Procedure description is: {s_array.value}")
@@ -346,7 +349,9 @@ class MacDataFile:
                 aux_units = dict()
                 if aux_tot > 0:
                     for aux_num in range(0, aux_tot):
-                        dll.GetAuxUnits(file_handle, aux_num, ctypes.pointer(s_array))
+                        self.dll.GetAuxUnits(
+                            file_handle, aux_num, ctypes.pointer(s_array)
+                        )
                         print(f"AUX{aux_num+1} unit is: {s_array.value}")
                         sac5 = copy.deepcopy(s_array)
                         aux_units[f"AUX{aux_num+1}"] = sac5.value
@@ -355,7 +360,9 @@ class MacDataFile:
                 smb_units = dict()
                 if smb_tot > 0:
                     for smb_num in range(0, smb_tot):
-                        dll.GetSMBUnits(file_handle, smb_num, ctypes.pointer(s_array))
+                        self.dll.GetSMBUnits(
+                            file_handle, smb_num, ctypes.pointer(s_array)
+                        )
                         print(f"SMB{smb_num+1} unit is: {s_array.value}")
                         sac6 = copy.deepcopy(s_array)
                         smb_units[f"SMB{smb_num+1}"] = sac6.value
@@ -377,7 +384,7 @@ class MacDataFile:
                 count = 0
                 # Read the file by calling LoadAndGetNextTimeData until <> 0
                 while (
-                    dll.LoadAndGetNextTimeData(
+                    self.dll.LoadAndGetNextTimeData(
                         file_handle, ctypes.pointer(dll_time_data)
                     )
                     == 0
@@ -394,7 +401,7 @@ class MacDataFile:
                         # Aux data
                         if aux_tot > 0:
                             for aux_num in range(0, aux_tot):
-                                # dll.GetAuxData(
+                                # self.dll.GetAuxData(
                                 #     file_handle,
                                 #     aux_num,
                                 #     ctypes.pointer(s_array)
@@ -402,7 +409,7 @@ class MacDataFile:
                                 # sac7 = copy.deepcopy(s_array)
                                 # sub_list.append(sac7.value)
                                 aux_obj = ctypes.c_float(1.0)
-                                dll.GetAuxData(
+                                self.dll.GetAuxData(
                                     file_handle, aux_num, ctypes.byref(aux_obj)
                                 )
                                 aux_val = aux_obj.value
@@ -414,7 +421,7 @@ class MacDataFile:
                         else:
                             for var_num in range(1, var_cnt + 1):
                                 # var_obj = ctypes.c_float(1.0)
-                                # dll.GetVARData(
+                                # self.dll.GetVARData(
                                 #     file_handle,
                                 #     var_num,
                                 #     ctypes.byref(var_obj)
@@ -422,7 +429,7 @@ class MacDataFile:
                                 # var_val = var_obj.value
                                 # sub_list.append(var_val)
                                 var_obj = ctypes.c_float(1.0)
-                                dll.GetVARData(
+                                self.dll.GetVARData(
                                     file_handle, var_num, ctypes.byref(var_obj)
                                 )
                                 var_val = var_obj.value
@@ -440,7 +447,7 @@ class MacDataFile:
                         CAN_val = ctypes.c_float()
                         can_str = ""
                         for can_num in range(0, 2):  # 0, 1
-                            dll.GetCANData(
+                            self.dll.GetCANData(
                                 file_handle, can_num, ctypes.pointer(CAN_val)
                             )
                             can_str += (
@@ -450,13 +457,13 @@ class MacDataFile:
                                 + "%.3f" % CAN_val.value
                             )
                         for can_num in range(0, 1):  # 0
-                            dll.GetCANData(
+                            self.dll.GetCANData(
                                 file_handle, can_num, ctypes.pointer(CAN_val)
                             )
                             # CAN0 = "%.4f" % CAN_val.value
                             sub_list.append(CAN_val.value)
                         for can_num in range(1, 2):  # 1
-                            dll.GetCANData(
+                            self.dll.GetCANData(
                                 file_handle, can_num, ctypes.pointer(CAN_val)
                             )
                             # CAN1 = "%.4f" % CAN_val.value
@@ -470,9 +477,9 @@ class MacDataFile:
                         rd["Meta data"]["Exceptions"].append(e)
 
                 # finally close file
-                dll.CloseDataFile(file_handle)
+                self.dll.CloseDataFile(file_handle)
                 # unload dll
-                del dll
+                del self.dll
                 # collect garbage!
                 gc.collect()
                 # Finalize time data reading by transferring the time series to a
@@ -532,7 +539,7 @@ class MacDataFile:
 
 
 # functions
-def datetime_fromdelphi(dvalue):
+def datetime_fromdelphi(dvalue: float):
     """
 
     Parameters
@@ -554,7 +561,9 @@ def datetime_fromdelphi(dvalue):
     return delphi_epoch + datetime.timedelta(days=dvalue)
 
 
-def get_bool_array_from_bit_field(ctype_bitfield, opts=None):
+def get_bool_array_from_bit_field(
+    ctype_bitfield, opts: Dict[str, bool] = None
+) -> List[bool]:
     # example
     # bitfield = ctypes.c_uint8(0b01100000)
     # value = bitfield.value
@@ -579,12 +588,18 @@ def get_bool_array_from_bit_field(ctype_bitfield, opts=None):
     return bool_array
 
 
+class DllArchitecture(Enum):
+    _order_ = "bit32 bit64"
+    bit32 = "32bit"
+    bit64 = "64bit"
+
+
 def get_top_lvl_procedure(
-    path_to_file,
-    save_procedure_to,
-    loaded_dll=None,
-    path_to_dll=None,
-    dll_architecture="64bit",
+    path_to_file: Union[str, Path],
+    save_procedure_to: Union[str, Path],
+    loaded_dll: Optional[ctypes.WinDLL] = None,
+    path_to_dll: Optional[Union[str, Path]] = None,
+    dll_architecture: Optional[DllArchitecture] = DllArchitecture.bit64,
 ):
     """Python wrapper for MacReadDataFileLIB.dll to read the top level procedure from a
     Maccor raw file directly. Top level means here the main procedure without the
@@ -622,11 +637,11 @@ def get_top_lvl_procedure(
             )
     # the Maccor dll
     if loaded_dll is None:
-        md = ctypes.WinDLL(str(pathlib.Path(path_to_dll).resolve()))
+        md = ctypes.WinDLL(str(Path(path_to_dll).resolve()))
     else:
         md = loaded_dll
     # specify the path to the file, make the path absolute
-    p2f_path = str(pathlib.Path(path_to_file).resolve())
+    p2f_path = str(Path(path_to_file).resolve())
     # we actually need a reference to an ascii encoded buffer of the string - more or
     # less try-and-error without the dll
     # source code
@@ -634,7 +649,7 @@ def get_top_lvl_procedure(
     p2f_enc_buff = ctypes.create_string_buffer(p2f_enc)
     p2f = ctypes.byref(p2f_enc_buff)
     # same goes for the saving path
-    sp2_path = str(pathlib.Path(save_procedure_to).resolve())
+    sp2_path = str(Path(save_procedure_to).resolve())
     sp2_enc = sp2_path.encode("ascii")
     sp2_enc_buff = ctypes.create_string_buffer(sp2_enc)
     sp2 = ctypes.byref(sp2_enc_buff)
@@ -666,7 +681,7 @@ def get_procedure_and_subroutine(path_to_file, save_procedure_to):
     pass
 
 
-def read_maccor_raw_data_file(path_to_file: pathlib.Path) -> dict:
+def read_maccor_raw_data_file(path_to_file: Union[str, Path]) -> dict:
     """Python wrapper for MacReadDataFileLIB.dll to read a Maccor raw file's content
     directly.
 
@@ -697,19 +712,41 @@ def read_maccor_raw_data_file(path_to_file: pathlib.Path) -> dict:
     [1] https://stackoverflow.com/questions/27127413/converting-python-string-object-to-c-char-using-ctypes
     [2] https://stackoverflow.com/questions/55768057/using-dll-on-delphi-in-python
     """
+    if isinstance(path_to_file, str):
+        path_to_file = Path(path_to_file)
     file = MacDataFile(path_to_file)
     return_dict = file.read()
     return return_dict
 
 
+class ReadMaccorDataOptions(Enum):
+    raw = "raw"
+    maccor_export1 = "Maccor Export 1"
+    MaccorExpormaccor_export2 = "Maccor Export 2"
+    mims_client1 = "MIMS Client 1"
+    mims_client2 = "MIMS Client 2"
+    mims_server2 = "MIMS Server 2"
+
+
+class DecimalSeparatorOptions(Enum):
+    comma = ","
+    point = "."
+
+
+class ThousandsSeparatorOptions(Enum):
+    comma = ","
+    point = "."
+    apostrophe = "'"
+
+
 def read_maccor_data(
     file,
-    option,
-    decimal=None,
-    thousands=None,
-    header=None,
-    encoding=None,
-    remove_nan_cols=True,
+    option: ReadMaccorDataOptions,
+    decimal: DecimalSeparatorOptions = None,
+    thousands: ThousandsSeparatorOptions = None,
+    header: int = None,
+    encoding: str = None,
+    remove_nan_cols: bool = True,
 ):
     # todo: implement translation of column names according to set standard for every
     #  case below
@@ -735,14 +772,16 @@ def read_maccor_data(
         0 denotes the first line of the file (if skip_blank_lines == False), as the
         lines of the file are 0 indexed
     encoding : str
-
+        Encoding of the file
+    remove_nan_cols : bool
+        Remove columns that contain only NaN values
 
     Returns
     -------
 
     """
 
-    def rename_columns(df):
+    def rename_columns(df: pd.DataFrame) -> pd.DataFrame:
         replacements = {
             "RecNum": "Rec",
             "Rec#": "Rec",
