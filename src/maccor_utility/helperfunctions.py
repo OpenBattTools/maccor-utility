@@ -11,7 +11,10 @@ A collection of functions to be used repeatedly throughout the scripts in this p
 
 # Importing required modules
 import datetime
-import pathlib
+import re
+from pathlib import Path
+
+from typing_extensions import Dict, List, Union
 
 
 # Definitions of the functions
@@ -79,7 +82,7 @@ def search_all_files(directory):
         List of pathlib.path objects
 
     """
-    dir_path = pathlib.Path(directory)
+    dir_path = Path(directory)
     assert dir_path.is_dir()
     file_list = []
     for x in dir_path.iterdir():
@@ -117,6 +120,66 @@ def filter_file_list(file_list, string, extension=False):
                 filtered_file_list.append(file)
     # Return filtered file list
     return filtered_file_list
+
+
+def get_column_names_mims_client1(file_path: Union[str, Path], header_num: int):
+    columns = read_specific_line_from_file(file_path, header_num).split("\t")
+    first_row_with_data = read_specific_line_from_file(file_path, header_num + 2)
+    number_of_data_columns = len(first_row_with_data.split("\t"))
+    cntr = 0
+    while number_of_data_columns > len(columns):
+        columns.append(f"dummy_col{cntr}")
+        cntr += 1
+    while number_of_data_columns < len(columns):
+        columns = columns[: len(columns) - 1]
+    return columns
+
+
+def inverse_dict_one_to_x(dd: Dict[str, List[str]]):
+    new_dict = {}
+    for key, values in dd.items():
+        if isinstance(values, list):
+            for value in values:
+                if value in new_dict.keys():
+                    raise ValueError(f"Value '{value}' is already in dictionary")
+                new_dict[value] = key
+        elif isinstance(values, str):
+            new_dict[values] = key
+    return new_dict
+
+
+def flatten_dict_one_to_x(dd: Dict[str, List[str]]):
+    new_dict = {}
+    for key, values in dd.items():
+        if len(values) > 1:
+            raise ValueError(f"Key '{key}' has more than one value")
+        new_dict[key] = values[0]
+    return new_dict
+
+
+def read_first_x_lines(file_path: Union[str, Path], num_lines: int):
+    with open(file_path) as file:
+        all_lines = file.readlines()
+    return all_lines[:num_lines]
+
+
+def apply_regex_return_match_groups(
+    pattern: str, string: str
+) -> Dict[str, [Union[str, List[str]]]]:
+    matches = re.finditer(pattern, string)
+    number_of_matches = len(list(matches))
+    ret_val = {}
+    if number_of_matches > 0:
+        for match in re.finditer(pattern, string):
+            key = match.groups()[0].strip()
+            if len(match.groups()) == 2:
+                value = match.groups()[1].strip()
+            else:
+                value = [
+                    match.groups()[idx].strip() for idx in range(1, len(match.groups()))
+                ]
+            ret_val[key] = value
+    return ret_val
 
 
 # Line before the last line of the file
