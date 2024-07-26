@@ -23,7 +23,7 @@ import os  # Required
 import subprocess
 import sys
 import time  # Required!
-from enum import Enum
+from enum import Enum, StrEnum
 
 # from ctypes import *
 from pathlib import Path
@@ -75,7 +75,7 @@ _ = type(TScopeTraceVI)
 _ = type(TDLLReading)
 
 
-class MaccorDataFormat(Enum):
+class MaccorDataFormat(StrEnum):
     raw = "raw"
     maccor_export1 = "Maccor Export 1"
     maccor_export2 = "Maccor Export 2"
@@ -106,8 +106,14 @@ class ReadMaccorTextFileParameter(ReadFileParameter):
     skip_blank_lines: bool = None
     exclude_from_params: List[str] = ["column_names"]
 
+    def __init__(self, **data):
+        super().__init__(**data)
+        for key in ["column_names"]:
+            if key not in self.exclude_from_params:
+                self.exclude_from_params.append(key)
 
-class HeaderRegExs(Enum):
+
+class HeaderRegExs(StrEnum):
     maccor_export1 = r"([^\t\n\d\:]+)\:*\t([^\t\n]+)[\n]{1}"
     maccor_export2 = r"([^\t\d\:]+)[\s\:]+\t([^\t\n]+)[\n]{1}"
     mims_client1 = r"([^\t\n\d\:]+)\:*\t([^\t\n]+)[\n]{1}"
@@ -444,6 +450,8 @@ def read_maccor_data_file(
     frmt: MaccorDataFormat,
     dll_path: Optional[Union[str, Path]] = None,
 ):
+    # todo: check if current and capacity (sign, accumulative counting etc. can be
+    #  read and harmonized)
     """Read a Maccor data file in the specified format
 
     Parameters
@@ -543,7 +551,7 @@ def get_bool_array_from_bit_field(
     return bool_array
 
 
-class DllArchitecture(Enum):
+class DllArchitecture(StrEnum):
     _order_ = "bit32 bit64"
     bit32 = "32bit"
     bit64 = "64bit"

@@ -9,7 +9,7 @@ import ctypes
 import os  # Required
 import time  # Required!
 from abc import abstractmethod
-from enum import Enum
+from enum import Enum, StrEnum
 from pathlib import Path
 
 # other modules
@@ -261,7 +261,7 @@ for ii in range(0, 65):
 
 
 # Classes
-class Separator(Enum):
+class Separator(StrEnum):
     comma = ","
     point = "."
     semicolon = ";"
@@ -270,7 +270,7 @@ class Separator(Enum):
     newline = "\n"
 
 
-class DecimalSeparator(Enum):
+class DecimalSeparator(StrEnum):
     comma = ","
     point = "."
 
@@ -291,7 +291,7 @@ class Encoding(Enum):
     iso8859_1 = "iso-8859-1"
 
 
-class DataFormat(Enum):
+class DataFormat(StrEnum):
     raw = "raw"
     txt = "txt"
 
@@ -342,9 +342,15 @@ class ReadFileParameter(BaseModel):
     column_names: Union[List[str], Callable]
     skip_blank_lines: bool
     apply_to_cols: Dict[int, Callable] = {}  # {column: function}
-    exclude_from_params: List[str] = ["apply_dict"]
+    exclude_from_params: List[str] = ["apply_to_cols", "exclude_from_params"]
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    def __init__(self, **data):
+        super().__init__(**data)
+        for key in ["apply_to_cols", "exclude_from_params"]:
+            if key not in self.exclude_from_params:
+                self.exclude_from_params.append(key)
 
 
 class TDLLHeaderData(ctypes.Structure):
