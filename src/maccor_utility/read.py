@@ -31,7 +31,7 @@ from warnings import warn
 
 import pandas as pd
 import pythoncom  # Require COM
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import field_validator
 from typing_extensions import Any, Callable, Dict, List, Literal, Optional, Self, Union
 
 # own modules
@@ -54,6 +54,9 @@ from maccor_utility.lookup import (
     TO_RAW,
     DecimalSeparator,
     Encoding,
+    ReadFileParameter,
+    ReadTableResult,
+    TabularData,
     TDLLFRARecord,
     TDLLHeaderData,
     TDLLReading,
@@ -82,19 +85,8 @@ class MaccorDataFormat(Enum):
 
 
 # Classes
-class MaccorTabularData(BaseModel):
-    as_list: List[Dict[str, Union[str, float]]]
-    as_dataframe: Optional[pd.DataFrame] = None
+class MaccorTabularData(TabularData):
     data_format: MaccorDataFormat
-
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-
-    def __init__(self, **data):
-        super().__init__(**data)
-        self.as_dataframe = self.to_dataframe()
-
-    def to_dataframe(self):
-        return pd.DataFrame(self.as_list)
 
     def change_column_names(self, target_format: MaccorDataFormat):
         self.as_dataframe = rename_columns(
@@ -106,27 +98,16 @@ class MaccorTabularData(BaseModel):
         self.data_format = target_format
 
 
-class ReadResult(BaseModel):
-    meta: dict
-    data: MaccorTabularData
-
-
-class ReadMaccorTextFileParameter(BaseModel):
-    decimal: DecimalSeparator
-    thousands: ThousandsSeparator
-    encoding: Encoding
-    header: int
+class ReadMaccorTextFileParameter(ReadFileParameter):
     skiprows: int = None
     index_col: Union[Any, Literal[False], None] = None  # IndexLabel,
     usecols: Any = None  # UsecolsArgType
     column_names: Union[List[str], Callable] = None
     skip_blank_lines: bool = None
-
-    model_config = ConfigDict(arbitrary_types_allowed=True)
+    exclude_from_params: List[str] = ["column_names"]
 
 
 class HeaderRegExs(Enum):
-    raw = "raw"
     maccor_export1 = r"([^\t\n\d\:]+)\:*\t([^\t\n]+)[\n]{1}"
     maccor_export2 = r"([^\t\d\:]+)[\s\:]+\t([^\t\n]+)[\n]{1}"
     mims_client1 = r"([^\t\n\d\:]+)\:*\t([^\t\n]+)[\n]{1}"
@@ -212,9 +193,11 @@ class MaccorDataRawFile(object):
         }
         data = []
         try:
-            _ = ctypes.c_wchar_p(self.file_name)  # OpenDataFile # pfile_name
-            _ = ctypes.c_char_p(self.file_name.encode("utf-8"))
-            # OpenDataFileASCII # pfile_name_ascii
+            pfile_name = ctypes.c_wchar_p(self.file_name)  # OpenDataFile
+            pfile_name_ascii = ctypes.c_char_p(self.file_name.encode("utf-8"))
+            _ = pfile_name
+            _ = pfile_name_ascii
+            # OpenDataFileASCII
             s_array = (ctypes.c_wchar * 256)()
 
             file = dll.OpenDataFile(self.file_name)
@@ -283,7 +266,7 @@ class MaccorDataRawFile(object):
                 count = 0
                 dll_time_data = TDLLTimeData()
                 dll_scope_trace = TDLLScopeTrace()
-                _ = type(dll_scope_trace)
+                _ = dll_scope_trace
                 # Read the file by calling LoadAndGetNextTimeData until <> 0
                 exceptions = []
                 while (
@@ -349,10 +332,14 @@ class MaccorDataRawFile(object):
                     # While try-except
                     except Exception as e:
                         exceptions.append(e)
+
                 if len(exceptions) > 0:
                     exceptions = [str(exception) for exception in exceptions]
                     unique_exceptions = set(exceptions)
-                    print(f"Number of unique exceptions: {len(unique_exceptions)}")
+                    print(
+                        f"Number of exceptions with a unique string:"
+                        f" {len(unique_exceptions)}"
+                    )
                     for exception in unique_exceptions:
                         print(
                             f"Exception occurred {exceptions.count(exception)}x times: "
@@ -386,7 +373,7 @@ class MaccorDataRawFile(object):
         return self
 
 
-class MaccorDataTxtFile(ReadResult):
+class MaccorDataTxtFile(ReadTableResult):
     file_path: Union[str, Path]
     export_format: MaccorDataFormat
     meta: Optional[dict] = None
@@ -404,8 +391,9 @@ class MaccorDataTxtFile(ReadResult):
             params["names"] = config.column_names(self.file_path, config.header)
         else:
             params["names"] = config.column_names
-        if "column_names" in params:
-            del params["column_names"]
+        for key in config.exclude_from_params:
+            if key in params:
+                del params[key]
         df = pd.read_table(filepath_or_buffer=self.file_path, **params)
         if remove_nan_cols:
             df.dropna(axis="columns", how="all", inplace=True)
@@ -435,14 +423,8 @@ class MaccorDataTxtFile(ReadResult):
             else:
                 self.meta[key] = value
         self.meta.update(new_meta)
-
+        # todo: read units from header where possible
         return self
-
-    @field_validator("file_path")
-    def check_file_path(cls, v):
-        if not Path(v).exists():
-            raise ValueError(f"File '{v}' does not exist!")
-        return v
 
     @field_validator("export_format")
     def check_export_format(cls, v):
@@ -462,8 +444,7 @@ def read_maccor_data_file(
     frmt: MaccorDataFormat,
     dll_path: Optional[Union[str, Path]] = None,
 ):
-    """
-    Read a Maccor data file in the specified format
+    """Read a Maccor data file in the specified format
 
     Parameters
     ----------
