@@ -37,18 +37,27 @@ from warnings import warn
 
 import pandas as pd
 import pythoncom  # Require COM
-from pydantic import field_validator
-from typing_extensions import Any, Callable, Dict, List, Literal, Optional, Self, Union
+from batt_utility.data_models import (
+    DecimalSeparator,
+    Encoding,
+    ReadFileParameter,
+    ReadTableResult,
+    TabularData,
+    ThousandsSeparator,
+)
 
 # own modules
-from maccor_utility.helperfunctions import (
+from batt_utility.helper_functions import (
     apply_regex_return_match_groups,
     flatten_dict_one_to_x,
-    get_column_names_mims_client1,
     inverse_dict_one_to_x,
     print_,
     read_first_x_lines,
 )
+from pydantic import field_validator
+from typing_extensions import Any, Callable, Dict, List, Literal, Optional, Self, Union
+
+from maccor_utility.helper_functions import get_column_names_mims_client1
 from maccor_utility.lookup import (
     MACCOR_COLUMN_UNITS,
     MACCOR_HEADER_UNITS,
@@ -58,17 +67,11 @@ from maccor_utility.lookup import (
     TO_MIMS_CLIENT2,
     TO_MIMS_SERVER2,
     TO_RAW,
-    DecimalSeparator,
-    Encoding,
-    ReadFileParameter,
-    ReadTableResult,
-    TabularData,
     TDLLFRARecord,
     TDLLHeaderData,
     TDLLReading,
     TDLLScopeTrace,
     TDLLTimeData,
-    ThousandsSeparator,
     TScopeTraceVI,
 )
 
@@ -263,8 +266,8 @@ class MaccorDataRawFile(object):
                     units = {}
                     for num in range(0, arg):
                         func(file, num, ctypes.pointer(s_array))
-                        print_(f"{key} {num+1} unit is: {s_array.value}", dg=debug)
-                        units[f"{key} {num+1}"] = copy.deepcopy(s_array.value)
+                        print_(f"{key} {num + 1} unit is: {s_array.value}", dg=debug)
+                        units[f"{key} {num + 1}"] = copy.deepcopy(s_array.value)
                     meta["Parameter"][key] = units
 
                 # Read time series data
@@ -321,7 +324,7 @@ class MaccorDataRawFile(object):
                             for aux_num in range(0, meta["Parameter"]["Number of Aux"]):
                                 aux_obj = ctypes.c_float(1.0)
                                 dll.GetAuxData(file, aux_num, ctypes.byref(aux_obj))
-                                row[f"Aux{aux_num+1}"] = copy.deepcopy(aux_obj.value)
+                                row[f"Aux{aux_num + 1}"] = copy.deepcopy(aux_obj.value)
                         # Variables
                         if (
                             meta["Parameter"]["Number of SMB"] > 0

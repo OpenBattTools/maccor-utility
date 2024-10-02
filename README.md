@@ -35,11 +35,11 @@ Maccor RAW data files directly require the proprietary "MaccorReadDataFileLIB.dl
 repository. You will need to get it by request from [Maccor, Inc.](http://www.maccor.com/TechnicalSupport.aspx) or their
 service partner in Europe, [CellCare Technologies Ltd.](https://www.cellcare.com/contact/index.php).
 
-### Easy installation (limited functionality):
+### Easy installation (limited functionality)
 ```cmd
 pip install maccor-utility
 ```
-### Step-by-step instructions (full functionality):
+### Step-by-step instructions (full functionality)
 * Clone the repository
 * Copy the "MaccorReadDataFileLIB.dll" file to the "src/maccor_dll" directory in your local clone of this repository
   * Depending on your operating system, choose the correct variant, e.g., 32bit or 64bit
