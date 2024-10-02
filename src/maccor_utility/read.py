@@ -25,7 +25,7 @@ import sys
 import time  # Required!
 from enum import Enum
 
-# Python version dependent import statements:
+# Python version dependent import statement:
 try:
     from enum import StrEnum
 except ImportError:
@@ -36,7 +36,21 @@ from pathlib import Path
 from warnings import warn
 
 import pandas as pd
-import pythoncom  # Require COM
+from pydantic import field_validator
+from typing_extensions import Any, Callable, Dict, List, Literal, Optional, Self, Union
+
+# Platform dependent import statement
+try:
+    import pythoncom  # Require COM
+except ImportError:
+    warn(
+        "COM not available. Most like you are running on a non-Windows operating "
+        "system. Else make sure to hav pywin32 installed. If you read this "
+        "message, you will most likely not be able to use the DLL and read Maccor "
+        "raw files directly."
+    )
+
+# Own modules
 from batt_utility.data_models import (
     DecimalSeparator,
     Encoding,
@@ -45,8 +59,6 @@ from batt_utility.data_models import (
     TabularData,
     ThousandsSeparator,
 )
-
-# own modules
 from batt_utility.helper_functions import (
     apply_regex_return_match_groups,
     flatten_dict_one_to_x,
@@ -54,8 +66,6 @@ from batt_utility.helper_functions import (
     print_,
     read_first_x_lines,
 )
-from pydantic import field_validator
-from typing_extensions import Any, Callable, Dict, List, Literal, Optional, Self, Union
 
 from maccor_utility.helper_functions import get_column_names_mims_client1
 from maccor_utility.lookup import (
@@ -77,7 +87,10 @@ from maccor_utility.lookup import (
 
 # Do something to make packages required by the DLL used (to avoid linting error)
 _ = type(os)
-_ = type(pythoncom)
+try:
+    _ = type(pythoncom)
+except NameError:
+    warn("Pythoncom not available.")
 _ = type(time)
 _ = type(TDLLFRARecord)
 _ = type(TScopeTraceVI)
