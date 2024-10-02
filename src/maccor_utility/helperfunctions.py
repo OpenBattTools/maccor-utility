@@ -165,7 +165,7 @@ def read_first_x_lines(file_path: Union[str, Path], num_lines: int):
 
 def apply_regex_return_match_groups(
     pattern: str, string: str
-) -> Dict[str, [Union[str, List[str]]]]:
+) -> Dict[str, Union[str, List[str]]]:
     matches = re.finditer(pattern, string)
     number_of_matches = len(list(matches))
     ret_val = {}
