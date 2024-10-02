@@ -583,7 +583,7 @@ class DllArchitecture(StrEnum):
 def get_top_lvl_procedure(
     path_to_file: Union[str, Path],
     save_procedure_to: Union[str, Path],
-    loaded_dll: Optional[ctypes.WinDLL] = None,
+    loaded_dll: Optional[ctypes.CDLL] = None,
     path_to_dll: Optional[Union[str, Path]] = None,
     dll_architecture: Optional[DllArchitecture] = DllArchitecture.bit64,
 ):
@@ -597,7 +597,8 @@ def get_top_lvl_procedure(
         Path to the file to read in
     save_procedure_to : str or pathlib.Path
         Path to save the procedure to
-    loaded_dll : ctypes.WinDLL
+    loaded_dll :
+        The loaded DLL, actually a ctypes.WinDLL
     path_to_dll : str or None or pathlib.Path
         Choose 'None' to use the DLL provided with this repository, otherwise specify
         a path.
