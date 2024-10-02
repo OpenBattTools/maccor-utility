@@ -19,8 +19,12 @@
 This repository contains utility tools for processing Maccor battery tester data.
 
 ## Legal notice
-This repository is not affiliated with [Maccor, Inc.](http://www.maccor.com/) or any of its subsidiaries. The software is provided as is and
-without any warranty. The software is not endorsed by Maccor, Inc. or any of its subsidiaries.
+"Maccor" is a trademark of Maccor, Inc. This repository and its developers don't claim ownership of the trademark
+or intend to infringe copyright or proprietary rights.
+
+The software in this repository is not affiliated with [Maccor, Inc.](http://www.maccor.com/) or any of its subsidiaries.
+The software is not endorsed by Maccor, Inc. or any of its subsidiaries. The software is provided as is and
+without any warranty.
 
 ## Disclaimer
 This is a work in progress. The code is not yet fully tested and may contain bugs. Use at your own risk.
