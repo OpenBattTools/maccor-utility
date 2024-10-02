@@ -9,7 +9,14 @@ import ctypes
 import os  # Required
 import time  # Required!
 from abc import abstractmethod
-from enum import Enum, StrEnum
+from enum import Enum
+
+# Python version dependent import statements:
+try:
+    from enum import StrEnum
+except ImportError:
+    from strenum import StrEnum
+
 from pathlib import Path
 
 # other modules

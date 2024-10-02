@@ -23,7 +23,13 @@ import os  # Required
 import subprocess
 import sys
 import time  # Required!
-from enum import Enum, StrEnum
+from enum import Enum
+
+# Python version dependent import statements:
+try:
+    from enum import StrEnum
+except ImportError:
+    from strenum import StrEnum
 
 # from ctypes import *
 from pathlib import Path
