@@ -33,11 +33,12 @@ except ImportError:
 
 # from ctypes import *
 from pathlib import Path
+from typing import Any
 from warnings import warn
 
 import pandas as pd
 from pydantic import field_validator
-from typing_extensions import Any, Callable, Dict, List, Literal, Optional, Self, Union
+from typing_extensions import Callable, Dict, List, Literal, Optional, Self, Union
 
 # Platform dependent import statement
 try:

@@ -4,17 +4,30 @@
 __docformat__ = "NumPy"
 __author__ = "Lukas Gold, Simon Stier"
 
-# modules as in readmacfile.py
 import ctypes
 import os  # Required
 import time  # Required!
 
-# other modules
-import pythoncom  # Require COM
+# modules as in readmacfile.py
+from warnings import warn
+
+# Platform dependent import statement
+try:
+    import pythoncom  # Require COM
+except ImportError:
+    warn(
+        "COM not available. Most like you are running on a non-Windows operating "
+        "system. Else make sure to hav pywin32 installed. If you read this "
+        "message, you will most likely not be able to use the DLL and read Maccor "
+        "raw files directly."
+    )
 
 # Do something to make packages required by the DLL used (to avoid linting error)
 _ = type(os)
-_ = type(pythoncom)
+try:
+    _ = type(pythoncom)
+except NameError:
+    warn("Pythoncom not available.")
 _ = type(time)
 
 
