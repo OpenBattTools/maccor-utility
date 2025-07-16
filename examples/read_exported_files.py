@@ -28,4 +28,9 @@ options = {
 for key, value in options.items():
     results[key] = read_maccor_data_file(file_path=value[0], frmt=value[1])
 
+    for str_format, format_tuple in options.items():
+        format = format_tuple[1]
+        results[key].data.change_column_names(format)
+
+
 # todo: besides raw, no other result contains meta data, description or units
