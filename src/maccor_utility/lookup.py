@@ -129,8 +129,8 @@ TO_EXPORT1 = {
     # missing: State, ES, EV Temp, EV Hum
 }
 for ii in range(0, 65):
-    TO_EXPORT1[f"VAR{ii}"] = f"VARx{ii}"
-    TO_EXPORT1[f"GlobFlag{ii}"] = f"FLGx{ii}"
+    TO_EXPORT1[f"VAR{ii}"] = [f"VARx{ii}"]
+    TO_EXPORT1[f"GlobFlag{ii}"] = [f"FLGx{ii}"]
 
 TO_RAW = {key: key for key in TO_EXPORT1.keys()}
 
@@ -165,8 +165,8 @@ TO_EXPORT2 = {
     # Resistance,
 }
 for ii in range(0, 65):
-    TO_EXPORT2[f"VAR{ii}"] = f"VAR{ii}"
-    TO_EXPORT2[f"GlobFlag{ii}"] = f"GlobFlag{ii}"
+    TO_EXPORT2[f"VAR{ii}"] = [f"VAR{ii}"]
+    TO_EXPORT2[f"GlobFlag{ii}"] = [f"GlobFlag{ii}"]
 
 TO_MIMS_CLIENT1 = {
     # Column names - raw: [mims_client1]
@@ -197,8 +197,8 @@ TO_MIMS_CLIENT1 = {
     # missing:
 }
 for ii in range(0, 65):
-    TO_MIMS_CLIENT1[f"VAR{ii}"] = f"VAR{ii}"
-    TO_MIMS_CLIENT1[f"GlobFlag{ii}"] = f"GlobFlag{ii}"
+    TO_MIMS_CLIENT1[f"VAR{ii}"] = [f"VAR{ii}"]
+    TO_MIMS_CLIENT1[f"GlobFlag{ii}"] = [f"GlobFlag{ii}"]
 
 TO_MIMS_CLIENT2 = {
     # Column names - raw: [mims_client2]
@@ -229,8 +229,8 @@ TO_MIMS_CLIENT2 = {
     # missing:
 }
 for ii in range(0, 65):
-    TO_MIMS_CLIENT2[f"VAR{ii}"] = f"VAR{ii}"
-    TO_MIMS_CLIENT2[f"GlobFlag{ii}"] = f"GlobFlag{ii}"
+    TO_MIMS_CLIENT2[f"VAR{ii}"] = [f"VAR{ii}"]
+    TO_MIMS_CLIENT2[f"GlobFlag{ii}"] = [f"GlobFlag{ii}"]
 
 TO_MIMS_SERVER2 = {
     # Column names - raw: [mims_server2]
@@ -263,8 +263,8 @@ TO_MIMS_SERVER2 = {
     # VAR1 - VAR50, GlobFlag1 - GlobFlag64
 }
 for ii in range(0, 65):
-    TO_MIMS_SERVER2[f"VAR{ii}"] = f"VAR{ii}"
-    TO_MIMS_SERVER2[f"GlobFlag{ii}"] = f"GlobFlag{ii}"
+    TO_MIMS_SERVER2[f"VAR{ii}"] = [f"VAR{ii}"]
+    TO_MIMS_SERVER2[f"GlobFlag{ii}"] = [f"GlobFlag{ii}"]
 
 
 # Classes
