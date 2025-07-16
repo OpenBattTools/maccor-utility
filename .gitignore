@@ -161,3 +161,4 @@ cython_debug/
 
 /.idea/
 /src/maccor_utility/maccor_dll/
+/test_data/
