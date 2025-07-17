@@ -70,6 +70,7 @@ from batt_utility.helper_functions import (
 
 from maccor_utility.helper_functions import get_column_names_mims_client1
 from maccor_utility.lookup import (
+    MACCOR_COLUMN_PINT_UNITS,
     MACCOR_COLUMN_UNITS,
     MACCOR_HEADER_UNITS,
     TO_EXPORT1,
@@ -119,6 +120,22 @@ class MaccorTabularData(TabularData):
         )
         self.as_list = self.as_dataframe.to_dict(orient="records")
         self.data_format = target_format
+
+    def use_pint(self, pint_units: dict = MACCOR_COLUMN_PINT_UNITS):
+        prior_data_format = self.data_format
+        self.change_column_names(MaccorDataFormat.raw)
+        as_dict = self.as_dataframe.to_dict(orient="dict")
+        self.as_dataframe = pd.DataFrame(
+            {
+                col_name: (
+                    pd.Series(as_dict[col_name], dtype=pint_units[col_name])
+                    if col_name in MACCOR_COLUMN_PINT_UNITS
+                    else pd.Series(as_dict[col_name])
+                )
+                for col_name in as_dict
+            }
+        )
+        self.change_column_names(prior_data_format)
 
 
 class ReadMaccorTextFileParameter(ReadFileParameter):

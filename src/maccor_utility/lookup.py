@@ -100,6 +100,37 @@ MACCOR_COLUMN_UNITS = {  # As in the raw file
     "FRAExpNum": "",
 }
 
+MACCOR_COLUMN_PINT_UNITS = {
+    # Column names - raw: [PINT Unit]
+    # "RecNum": "pint[dimensionless]",
+    # "CycleNumProc": "pint[dimensionless]",
+    # "HalfCycleNumCalc": "pint[dimensionless]",
+    # "StepNum": "pint[dimensionless]",
+    "DPtTime": "pint[day]",
+    "TestTime": "pint[second]",
+    "StepTime": "pint[second]",
+    "Capacity": "pint[ampere_hour]",
+    "Energy": "pint[watt_hour]",
+    "Current": "pint[ampere]",
+    "Voltage": "pint[volt]",
+    "ACZ": "pint[ohm]",
+    "DCIR": "pint[ohm]",
+    # "MainMode": ,
+    # "Mode": "pint[dimensionless]",
+    # "EndCode": "pint[dimensionless]",
+    # "Range": "pint[dimensionless]",
+    # "GlobFlags": "pint[dimensionless]",
+    # "HasVarData": ,
+    # "HasGlobFlags": ,
+    # "HasFRAData": ,
+    # "DigIO": ,
+    "FRAStartTime": "pint[second]",
+    # "FRAExpNum": "pint[dimensionless]",
+}
+for ii in range(0, 65):
+    MACCOR_COLUMN_PINT_UNITS[f"VAR{ii}"] = "pint[dimensionless]"
+    # MACCOR_COLUMN_PINT_UNITS[f"GlobFlag{ii}"] = "pint[dimensionless]"
+
 TO_EXPORT1 = {
     # Column names - raw: [export1]
     "RecNum": ["Rec#"],

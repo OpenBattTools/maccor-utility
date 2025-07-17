@@ -32,5 +32,6 @@ for key, value in options.items():
         format = format_tuple[1]
         results[key].data.change_column_names(format)
 
+results["raw"].data.use_pint()
 
 # todo: besides raw, no other result contains meta data, description or units
