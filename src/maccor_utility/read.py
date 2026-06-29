@@ -68,7 +68,10 @@ from batt_utility.helper_functions import (
     read_first_x_lines,
 )
 
-from maccor_utility.helper_functions import get_column_names_mims_client1
+from maccor_utility.helper_functions import (
+    get_column_names_mims_client1,
+    parse_duration_to_seconds,
+)
 from maccor_utility.lookup import (
     MACCOR_COLUMN_UNITS,
     MACCOR_HEADER_UNITS,
@@ -427,10 +430,19 @@ class MaccorDataTxtFile(ReadTableResult):
         if remove_nan_cols:
             df.dropna(axis="columns", how="all", inplace=True)
         df.dropna(axis="index", how="all", inplace=True)
+        renamed = rename_columns(
+            df, input_format=self.export_format, target_format=MaccorDataFormat.raw
+        )
+        # Some text exports (e.g. Maccor Export 1, MIMS Client 2) report the test
+        # and step time as duration strings ("Nd HH:MM:SS[,ff]") instead of
+        # seconds; convert those columns to a numeric number of seconds.
+        for time_col in ("TestTime", "StepTime"):
+            if time_col in renamed.columns and not pd.api.types.is_numeric_dtype(
+                renamed[time_col]
+            ):
+                renamed[time_col] = renamed[time_col].map(parse_duration_to_seconds)
         self.data = MaccorTabularData(
-            as_list=rename_columns(
-                df, input_format=self.export_format, target_format=MaccorDataFormat.raw
-            ).to_dict(orient="records"),
+            as_list=renamed.to_dict(orient="records"),
             data_format=self.export_format,
         )
         first_ten_lines = read_first_x_lines(self.file_path, 10)
