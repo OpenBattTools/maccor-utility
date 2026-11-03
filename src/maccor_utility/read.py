@@ -65,7 +65,6 @@ from batt_utility.helper_functions import (
     flatten_dict_one_to_x,
     inverse_dict_one_to_x,
     print_,
-    read_first_x_lines,
 )
 
 from maccor_utility.helper_functions import (
@@ -445,7 +444,12 @@ class MaccorDataTxtFile(ReadTableResult):
             as_list=renamed.to_dict(orient="records"),
             data_format=self.export_format,
         )
-        first_ten_lines = read_first_x_lines(self.file_path, 10)
+        # read_first_x_lines opens with the platform default encoding, so a
+        # cp1252 export raises UnicodeDecodeError wherever that default is
+        # UTF-8. The header has to be read the way the table is.
+        encoding = getattr(config.encoding, "value", config.encoding)
+        with open(self.file_path, encoding=encoding) as handle:
+            first_ten_lines = [line for _, line in zip(range(10), handle)]
         ftl_str = "\n".join(first_ten_lines)
         self.meta = {}
         new_meta = apply_regex_return_match_groups(
