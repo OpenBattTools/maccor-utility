@@ -1,4 +1,7 @@
-exclude: '^docs/conf.py'
+# tests/data holds verbatim cycler exports. Their lines end in a tab, which is
+# a trailing empty column the parser counts, so the whitespace hooks must not
+# rewrite them.
+exclude: '^(docs/conf\.py|tests/data/)'
 
 repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks

@@ -5,11 +5,7 @@ import pandas as pd
 import pytest
 
 from maccor_utility.helper_functions import parse_duration_to_seconds
-from maccor_utility.read import (
-    MaccorDataFormat,
-    read_maccor_data_file,
-    rename_columns,
-)
+from maccor_utility.read import MaccorDataFormat, read_maccor_data_file, rename_columns
 
 DATA_DIR = Path(__file__).parent / "data"
 
