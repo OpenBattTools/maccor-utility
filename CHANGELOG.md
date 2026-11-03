@@ -1,6 +1,6 @@
 # Changelog
 
-## Version 1.5.0
+## Version 1.5.1
 
 - FIX: parse the `TestTime`/`StepTime` columns of the "Maccor Export 1" and
   "MIMS Client 2" text formats, which are exported as duration strings
